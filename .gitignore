@@ -2,3 +2,6 @@
 os/target/*
 os/.idea/*
 Cargo.lock
+labcodes/**/obj/
+labcodes/**/bin/
+labcodes/**/q.log
