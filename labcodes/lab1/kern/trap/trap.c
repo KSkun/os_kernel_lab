@@ -46,6 +46,15 @@ idt_init(void) {
       *     You don't know the meaning of this instruction? just google it! and check the libs/x86.h to know more.
       *     Notice: the argument of lidt is idt_pd. try to find it!
       */
+     extern uintptr_t __vectors[];
+     for (int i = 0; i < 256; i++) {
+         if (i != T_SYSCALL) {
+             SETGATE(idt[i], 0, GD_KTEXT, __vectors[i], DPL_KERNEL);
+         } else {
+             SETGATE(idt[i], 1, GD_KTEXT, __vectors[i], DPL_USER);
+         }
+     }
+    lidt(&idt_pd);
 }
 
 static const char *
@@ -134,6 +143,8 @@ print_regs(struct pushregs *regs) {
     cprintf("  eax  0x%08x\n", regs->reg_eax);
 }
 
+int timer_tick_counter = 0;
+
 /* trap_dispatch - dispatch based on what type of trap occurred */
 static void
 trap_dispatch(struct trapframe *tf) {
@@ -147,6 +158,11 @@ trap_dispatch(struct trapframe *tf) {
          * (2) Every TICK_NUM cycle, you can print some info using a funciton, such as print_ticks().
          * (3) Too Simple? Yes, I think so!
          */
+        timer_tick_counter++;
+        if (timer_tick_counter >= TICK_NUM) {
+            timer_tick_counter = 0;
+            print_ticks();
+        }
         break;
     case IRQ_OFFSET + IRQ_COM1:
         c = cons_getc();
